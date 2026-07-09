@@ -3,11 +3,11 @@
 //   results.json, patterns.json, and (optionally)
 //   verification-sample-v1.json / verification-sample-v2.json
 //
-// Run after: pnpm research && pnpm patterns && pnpm sample
+// Run after: npm run research && npm run patterns && npm run sample
 // (and ideally: fill in human_verdict by hand, rename to -v1,
-//  fix prompt, pnpm research --rerun, pnpm sample again, rename to -v2)
+//  fix prompt, npm run research:rerun, npm run sample again, rename to -v2)
 //
-// Usage: pnpm report
+// Usage: npm run report
 
 import fs from "fs";
 import path from "path";
@@ -24,6 +24,8 @@ function readIfExists(file: string) {
 const sampleV1 = readIfExists("verification-sample-v1.json");
 const sampleV2 = readIfExists("verification-sample-v2.json");
 const sampleLatest = readIfExists("verification-sample.json");
+const verificationSample = (sampleV2 || sampleLatest || []) as any[];
+const hasVerificationSample = verificationSample.length > 0;
 const githubProof = readIfExists("composio-github.json");
 
 function accuracyOf(sample: any[] | null) {
@@ -70,7 +72,7 @@ const uniqueCategories = [...new Set(results.map((r: any) => r.category))].sort(
 const uniqueAccess = [...new Set(results.map((r: any) => r.access))].sort();
 const uniqueVerdicts = [...new Set(results.map((r: any) => r.buildable_verdict))].sort();
 
-const verificationRows = (sampleV2 || sampleLatest || [])
+const verificationRows = verificationSample
   .map(
     (s: any) => `
   <tr>

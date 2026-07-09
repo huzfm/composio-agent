@@ -85,7 +85,8 @@ npm run github
 | --- | --- |
 | `src/apps.json` | The 100 apps being researched |
 | `src/prompts.ts` | The structured research prompt and verification checklist |
-| `src/index.ts` | CLI pipeline: research, resume, sample, patterns, Composio checks |
+| `src/index.ts` | Thin CLI router for research, sample, patterns, and Composio commands |
+| `src/research.ts` | Research engine: page fetching, Groq calls, Composio toolkit checks, retries, resume checkpoints |
 | `src/report.ts` | Builds the final HTML report |
 | `src/report.html` | Final deliverable after running `npm run report` |
 
