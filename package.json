@@ -15,7 +15,8 @@
     "github": "tsx src/index.ts github",
     "report": "tsx src/report.ts",
     "all": "npm run research && npm run patterns && npm run sample && npm run github && npm run report",
-    "output": "npm run patterns && npm run github && npm run report"
+    "output": "npm run patterns && npm run github && npm run report",
+    "build": "npm run output"
   },
   "dependencies": {
     "@composio/core": "^0.13.1",
