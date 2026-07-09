@@ -1,7 +1,6 @@
-// prompts.ts
+
 // Central place for every prompt the research agent uses.
-// Keeping prompts here (not inline in index.ts) makes it easy to
-// tweak wording once and re-run without touching the pipeline logic.
+
 
 export interface AppInput {
   id: number;
@@ -10,11 +9,6 @@ export interface AppInput {
   hint: string;
 }
 
-/**
- * Result of actually querying the Composio SDK to see whether a toolkit
- * already exists for this app. This is REAL, verified data (not a model
- * guess) — see checkComposioToolkit() in index.ts.
- */
 export interface ComposioCheckResult {
   slugTried: string;
   exists: boolean;
@@ -23,12 +17,6 @@ export interface ComposioCheckResult {
   error?: string;
 }
 
-/**
- * The single research prompt sent per app.
- * Forces strict JSON output so the pipeline can parse it directly.
- * Explicitly tells the model to flag low confidence instead of guessing —
- * this is what makes the verification step meaningful later.
- */
 export function buildResearchPrompt(app: AppInput): string {
   return `You are researching software applications to evaluate whether they could be turned into an AI-agent tool integration (like a Composio toolkit or an MCP server).
 
@@ -72,14 +60,7 @@ Respond with ONLY valid JSON, no markdown fences, no commentary, matching exactl
 }`;
 }
 
-/**
- * Builds the Composio evidence block injected into the research prompt.
- * This is REAL data pulled from the Composio SDK (composio.tools.get),
- * not something the model is asked to guess — we tell it what we found
- * and let it reason about what that implies for buildability, then we
- * overwrite has_composio_toolkit / composio_tool_count ourselves after
- * parsing so the model can never quietly contradict verified ground truth.
- */
+
 function buildComposioBlock(composio: ComposioCheckResult | null): string {
   if (!composio) {
     return `Composio check: not performed (no COMPOSIO_API_KEY configured, or check skipped).`;
@@ -93,17 +74,6 @@ function buildComposioBlock(composio: ComposioCheckResult | null): string {
   return `Composio check (VERIFIED, not a guess): No Composio toolkit found under the slug "${composio.slugTried}". This does NOT necessarily mean no integration is possible — Composio may use a different slug for this app, or may simply not cover it yet. Do not treat this alone as proof the app is blocked.`;
 }
 
-/**
- * Used when we've fetched the docs page ourselves (see fetchDocsText in index.ts)
- * and are handing the model a bounded chunk of real page text instead of letting
- * it run its own uncontrolled internal search. This is what avoids the 413
- * "request too large" errors that groq/compound's built-in search caused —
- * we control exactly how much text goes in.
- *
- * Also injects a verified Composio toolkit-existence check (see
- * buildComposioBlock above) so the model's buildable_verdict / blocker /
- * notes can account for a REAL AI-agent-integration signal, not just guesswork.
- */
 export function buildResearchPromptWithContext(
   app: AppInput,
   pageText: string | null,
@@ -165,10 +135,7 @@ Respond with ONLY valid JSON, no markdown fences, no commentary, matching exactl
 }`;
 }
 
-/**
- * Used during the manual verification pass — not sent to the model,
- * just a checklist template so spot-checks are consistent across apps.
- */
+
 export function buildVerificationChecklist(app: AppInput): string {
   return `Verification checklist for "${app.name}":
 [ ] Opened the evidence_url the agent cited — does it actually exist and say what was claimed?
