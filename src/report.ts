@@ -158,24 +158,58 @@ const html = `<!DOCTYPE html>
   }
   .stat .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
   .stat .label { color: var(--muted); font-size: 0.85rem; }
-  h2 { font-size: 1.2rem; margin-top: 0; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); cursor: pointer; }
-  tr:hover { background: rgba(255,255,255,0.02); }
-  .pill { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--border); }
+  h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 1.2rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); }
+  th { 
+    color: var(--muted); 
+    font-weight: 600; 
+    position: sticky; 
+    top: 0; 
+    background: var(--card); 
+    cursor: pointer; 
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--border);
+    border-bottom: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+  th:hover { color: var(--text); background: #1c202a; }
+  tr { transition: background-color 0.15s ease; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+  tr:hover { background: rgba(255,255,255,0.04); }
+  td { color: #cfd4dc; }
+  td:first-child { font-weight: 600; color: #fff; }
+  .pill { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border); font-weight: 500; display: inline-block; white-space: nowrap; }
   .pill-self-serve-free, .pill-yes-today { background: rgba(62,207,142,0.12); color: var(--green); border-color: rgba(62,207,142,0.3); }
   .pill-self-serve-paid, .pill-yes-with-friction { background: rgba(245,185,66,0.12); color: var(--amber); border-color: rgba(245,185,66,0.3); }
   .pill-gated-approval, .pill-gated-partnership, .pill-blocked { background: rgba(242,84,91,0.12); color: var(--red); border-color: rgba(242,84,91,0.3); }
-  .conf-high { color: var(--green); }
-  .conf-medium { color: var(--amber); }
-  .conf-low { color: var(--red); }
-  .filters { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .conf-high { color: var(--green); font-weight: 600; }
+  .conf-medium { color: var(--amber); font-weight: 600; }
+  .conf-low { color: var(--red); font-weight: 600; }
+  .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
   select, input[type=text] {
-    background: var(--bg); color: var(--text); border: 1px solid var(--border);
-    border-radius: 8px; padding: 0.4rem 0.6rem; font-size: 0.85rem;
+    background: #1a1d24; color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
   }
-  .table-wrap { max-height: 560px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+  select:hover, input[type=text]:hover { border-color: #3b4252; }
+  select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(110,168,254,0.2); }
+  .table-wrap { 
+    max-height: 600px; 
+    overflow: auto; 
+    border: 1px solid var(--border); 
+    border-radius: 12px; 
+    background: var(--card);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  .table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .table-wrap::-webkit-scrollbar-track { background: var(--card); border-radius: 12px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #3b4252; border-radius: 12px; }
+  .table-wrap::-webkit-scrollbar-thumb:hover { background: #4c566a; }
   .verdict-correct { color: var(--green); font-weight: 600; }
   .verdict-partially-correct { color: var(--amber); font-weight: 600; }
   .verdict-incorrect { color: var(--red); font-weight: 600; }
@@ -303,7 +337,6 @@ const html = `<!DOCTYPE html>
 
 </main>
 
-<footer>Generated automatically from results.json + patterns.json. Honest misses are shown above, not hidden.</footer>
 
 <script>
   const catSel = document.getElementById('filterCategory');
