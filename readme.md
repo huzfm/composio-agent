@@ -11,8 +11,6 @@ npm install
 npx tsc --noEmit
 ```
 
-This verifies the TypeScript code without calling Groq or Composio.
-
 ## 2. Add API Keys
 
 Create `.env` in the project root:
@@ -24,7 +22,6 @@ COMPOSIO_API_KEY=your_composio_key_here
 
 `GROQ_API_KEY` is required for research.
 
-`COMPOSIO_API_KEY` is optional for basic evaluation. If present, the app also verifies Composio toolkit availability and can run the GitHub proof step.
 
 ## 3. Fast Evaluation Run
 
@@ -60,13 +57,6 @@ If the research run stops because of rate limits, continue later with:
 npm run research:resume
 ```
 
-If research results already exist and you only want to rebuild the non-Composio outputs:
-
-```bash
-npm run patterns
-npm run sample
-npm run report
-```
 
 ## 5. Optional Composio Steps
 
@@ -89,7 +79,7 @@ Then run:
 npm run github
 ```
 
-## 6. What To Review
+## 6. File structure
 
 | File | Why it matters |
 | --- | --- |
@@ -99,22 +89,3 @@ npm run github
 | `src/report.ts` | Builds the final HTML report |
 | `src/report.html` | Final deliverable after running `npm run report` |
 
-Generated outputs are ignored by Git so an evaluator can rerun the pipeline cleanly.
-
-## 7. MCP Scope
-
-MCP is researched, not launched locally.
-
-For each app, the agent records:
-
-- `has_mcp`
-- `mcp_source`
-
-Those fields appear in `results.json`, are counted in `patterns.json`, and are displayed in the final report.
-
-## 8. Common Notes
-
-- If a command says `No results.json yet`, run `npm run research:test` or `npm run research` first.
-- If Groq rate limits the full run, use `npm run research:resume` later.
-- If Composio says no connected account exists, run `npm run connect-github` first.
-- Fastest evaluator path: `npx tsc --noEmit`, `npm run research:test`, `npm run patterns`, `npm run sample`, `npm run report`.
