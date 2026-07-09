@@ -1,0 +1,2459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Toolkit Buildability Audit — 100 Apps</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --card: #14171f;
+    --border: #262b36;
+    --text: #e8eaed;
+    --muted: #9aa1ac;
+    --accent: #6ea8fe;
+    --green: #3ecf8e;
+    --amber: #f5b942;
+    --red: #f2545b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0 0 4rem;
+  }
+  header {
+    padding: 3rem 2rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  header h1 { font-size: 1.9rem; margin-bottom: 0.25rem; }
+  header p.sub { color: var(--muted); margin-top: 0; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .headline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .stat {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .stat .num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat .label { color: var(--muted); font-size: 0.85rem; }
+  h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 1.2rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); }
+  th { 
+    color: var(--muted); 
+    font-weight: 600; 
+    position: sticky; 
+    top: 0; 
+    background: var(--card); 
+    cursor: pointer; 
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--border);
+    border-bottom: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+  th:hover { color: var(--text); background: #1c202a; }
+  tr { transition: background-color 0.15s ease; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+  tr:hover { background: rgba(255,255,255,0.04); }
+  td { color: #cfd4dc; }
+  td:first-child { font-weight: 600; color: #fff; }
+  .pill { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; border: 1px solid var(--border); font-weight: 500; display: inline-block; white-space: nowrap; }
+  .pill-self-serve-free, .pill-yes-today { background: rgba(62,207,142,0.12); color: var(--green); border-color: rgba(62,207,142,0.3); }
+  .pill-self-serve-paid, .pill-yes-with-friction { background: rgba(245,185,66,0.12); color: var(--amber); border-color: rgba(245,185,66,0.3); }
+  .pill-gated-approval, .pill-gated-partnership, .pill-blocked { background: rgba(242,84,91,0.12); color: var(--red); border-color: rgba(242,84,91,0.3); }
+  .conf-high { color: var(--green); font-weight: 600; }
+  .conf-medium { color: var(--amber); font-weight: 600; }
+  .conf-low { color: var(--red); font-weight: 600; }
+  .filters { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
+  select, input[type=text] {
+    background: #1a1d24; color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  select:hover, input[type=text]:hover { border-color: #3b4252; }
+  select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(110,168,254,0.2); }
+  .table-wrap { 
+    max-height: 600px; 
+    overflow: auto; 
+    border: 1px solid var(--border); 
+    border-radius: 12px; 
+    background: var(--card);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  .table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+  .table-wrap::-webkit-scrollbar-track { background: var(--card); border-radius: 12px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #3b4252; border-radius: 12px; }
+  .table-wrap::-webkit-scrollbar-thumb:hover { background: #4c566a; }
+  .verdict-correct { color: var(--green); font-weight: 600; }
+  .verdict-partially-correct { color: var(--amber); font-weight: 600; }
+  .verdict-incorrect { color: var(--red); font-weight: 600; }
+  .accuracy-compare { display: flex; gap: 2rem; align-items: center; margin-top: 1rem; }
+  .accuracy-box { text-align: center; }
+  .accuracy-box .pct { font-size: 2.2rem; font-weight: 800; }
+  .arrow { font-size: 1.5rem; color: var(--muted); }
+  .proof-list { list-style: none; padding: 0; }
+  .proof-list li { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+  .err { color: var(--red); }
+  code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Toolkit Buildability Audit — 100 Apps</h1>
+  <p class="sub">Researched by an AI agent (Groq <code>groq/compound</code>, built-in web search), verified by hand, patterns clustered below.</p>
+</header>
+
+<main>
+
+  <section class="card">
+    <h2>Headline patterns</h2>
+    <div class="headline-grid">
+      <div class="stat"><div class="num">100</div><div class="label">apps researched</div></div>
+      <div class="stat"><div class="num">55</div><div class="label">buildable today</div></div>
+      <div class="stat"><div class="num">12</div><div class="label">already have an MCP</div></div>
+      <div class="stat"><div class="num">46</div><div class="label">verified Composio toolkit</div></div>
+      <div class="stat"><div class="num">6</div><div class="label">gated (approval / partnership)</div></div>
+    </div>
+    <p style="margin-top:1.25rem; color: var(--muted);">
+      Top blocker across all apps found "not buildable today": <strong style="color: var(--text)">no page could be fetched</strong> (9 apps).
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Category breakdown</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Category</th><th>Total</th><th>Self-serve</th><th>Gated</th><th>Buildable today</th><th>Has MCP</th><th>Composio toolkit</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>AI CRM</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+        </tr>
+<tr>
+          <td>Customer Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Sales CRM</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Open Source CRM</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Work Management Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Sales and Customer Management</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Sales Automation</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>CRM and Sales Automation</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>CRM and Sales</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Customer Service</td>
+          <td>3</td>
+          <td>3</td>
+          <td>0</td>
+          <td>3</td>
+          <td>0</td>
+          <td>3</td>
+        </tr>
+<tr>
+          <td>Customer Support</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Customer Service Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI-native Support Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI Support Infrastructure</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Ecommerce Support</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Customer Experience AI</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Team Collaboration</td>
+          <td>3</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Cloud Communication</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Team Communication</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Communications</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+        </tr>
+<tr>
+          <td>Business Messaging</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Customer Communications</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Cloud Communications</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Advertising Management</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Advertising Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Marketing Automation</td>
+          <td>5</td>
+          <td>4</td>
+          <td>1</td>
+          <td>3</td>
+          <td>0</td>
+          <td>3</td>
+        </tr>
+<tr>
+          <td>Social Media Marketing</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Social Media Management</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Email Marketing</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Ecommerce Platform</td>
+          <td>5</td>
+          <td>4</td>
+          <td>1</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Ecommerce</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Ecommerce platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Website Development</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Digital Business Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>SEO Data</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>SEO Tool</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>SEO and Marketing</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Data Scraping</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>2</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Web Scraping and Automation</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+          <td>1</td>
+          <td>2</td>
+        </tr>
+<tr>
+          <td>Social Media Search</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>B2B Data Enrichment</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Go-to-Market Automation</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Developer Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Cloud Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Web Development Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Network Security</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Database as a Service</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Graph Database</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Cloud Data Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Database Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Monitoring and Security</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Error Tracking</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Productivity</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Productivity and Project Management</td>
+          <td>2</td>
+          <td>1</td>
+          <td>0</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+        </tr>
+<tr>
+          <td>Project Management</td>
+          <td>4</td>
+          <td>4</td>
+          <td>0</td>
+          <td>4</td>
+          <td>2</td>
+          <td>3</td>
+        </tr>
+<tr>
+          <td>Work Automation Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Collaboration Platform</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Time Tracking and Project Management</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Payment Processing</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Financial Data Platform</td>
+          <td>2</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Cryptocurrency Trading</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Foreign Exchange Audit</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Accounting and Finance</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Accounting and Bookkeeping</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Financial Management</td>
+          <td>2</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+          <td>0</td>
+          <td>2</td>
+        </tr>
+<tr>
+          <td>AI Research</td>
+          <td>2</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI transcription</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI Notetaking</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+<tr>
+          <td>Document Parsing</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI-powered software development</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>AI Media Generation</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Diagram Generation</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Media Processing</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+<tr>
+          <td>Meeting Intelligence</td>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Verification — did the agent get it right?</h2>
+    <p style="color:var(--amber)">No verification scored yet — run <code>pnpm sample</code>, fill in <code>human_verdict</code> by hand in verification-sample.json, then re-generate this report.</p>
+    <div class="table-wrap" style="margin-top:1rem;">
+      <table>
+        <thead><tr><th>App</th><th>Agent said (access)</th><th>Agent confidence</th><th>Human verdict</th><th>Notes</th></tr></thead>
+        <tbody>
+  <tr>
+    <td>Zoho CRM</td>
+    <td>self-serve-paid</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Intercom</td>
+    <td>self-serve-free</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Plain</td>
+    <td>self-serve-paid</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Lark (Larksuite)</td>
+    <td>unclear</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Pumble</td>
+    <td>self-serve-free</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>LinkedIn Ads</td>
+    <td>gated-approval</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>GoHighLevel</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Salesforce Commerce Cloud</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Gumroad</td>
+    <td>self-serve-free</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>DataForSEO</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>SE Ranking</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>MrScraper</td>
+    <td>self-serve-paid</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Sherlock</td>
+    <td>self-serve-free</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Neo4j</td>
+    <td>self-serve-free</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Datadog</td>
+    <td>self-serve-paid</td>
+    <td>high</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Airtable</td>
+    <td>unclear</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Binance</td>
+    <td>self-serve-free</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>Paygent Connect</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>QuickBooks</td>
+    <td>self-serve-paid</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td>PitchBook</td>
+    <td>gated-approval</td>
+    <td>low</td>
+    <td class="verdict-">pending</td>
+    <td></td>
+  </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  
+  <section class="card">
+    <h2>Composio SDK in action</h2>
+    <p>For open-source apps in the list, the pipeline calls Composio's <code>GITHUB</code> toolkit directly (<code>composio.tools.execute("GITHUB_GET_A_REPOSITORY", ...)</code>) to pull live repo metadata — a distinct, clearly-labeled use of Composio's own SDK, separate from the main research loop.</p>
+    <ul class="proof-list">
+      <li><strong>Sherlock</strong> — fetched via Composio ✅</li>
+<li><strong>Mermaid CLI</strong> — fetched via Composio ✅</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Full findings (all 100 apps)</h2>
+    <div class="filters">
+      <select id="filterCategory"><option value="">All categories</option><option value="AI CRM">AI CRM</option><option value="AI Media Generation">AI Media Generation</option><option value="AI Notetaking">AI Notetaking</option><option value="AI Research">AI Research</option><option value="AI Support Infrastructure">AI Support Infrastructure</option><option value="AI transcription">AI transcription</option><option value="AI-native Support Platform">AI-native Support Platform</option><option value="AI-powered software development">AI-powered software development</option><option value="Accounting and Bookkeeping">Accounting and Bookkeeping</option><option value="Accounting and Finance">Accounting and Finance</option><option value="Advertising Management">Advertising Management</option><option value="Advertising Platform">Advertising Platform</option><option value="B2B Data Enrichment">B2B Data Enrichment</option><option value="Business Messaging">Business Messaging</option><option value="CRM and Sales">CRM and Sales</option><option value="CRM and Sales Automation">CRM and Sales Automation</option><option value="Cloud Communication">Cloud Communication</option><option value="Cloud Communications">Cloud Communications</option><option value="Cloud Data Platform">Cloud Data Platform</option><option value="Cloud Platform">Cloud Platform</option><option value="Collaboration Platform">Collaboration Platform</option><option value="Communications">Communications</option><option value="Cryptocurrency Trading">Cryptocurrency Trading</option><option value="Customer Communications">Customer Communications</option><option value="Customer Experience AI">Customer Experience AI</option><option value="Customer Platform">Customer Platform</option><option value="Customer Service">Customer Service</option><option value="Customer Service Platform">Customer Service Platform</option><option value="Customer Support">Customer Support</option><option value="Data Scraping">Data Scraping</option><option value="Database Platform">Database Platform</option><option value="Database as a Service">Database as a Service</option><option value="Developer Platform">Developer Platform</option><option value="Diagram Generation">Diagram Generation</option><option value="Digital Business Platform">Digital Business Platform</option><option value="Document Parsing">Document Parsing</option><option value="Ecommerce">Ecommerce</option><option value="Ecommerce Platform">Ecommerce Platform</option><option value="Ecommerce Support">Ecommerce Support</option><option value="Ecommerce platform">Ecommerce platform</option><option value="Email Marketing">Email Marketing</option><option value="Error Tracking">Error Tracking</option><option value="Financial Data Platform">Financial Data Platform</option><option value="Financial Management">Financial Management</option><option value="Foreign Exchange Audit">Foreign Exchange Audit</option><option value="Go-to-Market Automation">Go-to-Market Automation</option><option value="Graph Database">Graph Database</option><option value="Marketing Automation">Marketing Automation</option><option value="Media Processing">Media Processing</option><option value="Meeting Intelligence">Meeting Intelligence</option><option value="Monitoring and Security">Monitoring and Security</option><option value="Network Security">Network Security</option><option value="Open Source CRM">Open Source CRM</option><option value="Payment Processing">Payment Processing</option><option value="Productivity">Productivity</option><option value="Productivity and Project Management">Productivity and Project Management</option><option value="Project Management">Project Management</option><option value="SEO Data">SEO Data</option><option value="SEO Tool">SEO Tool</option><option value="SEO and Marketing">SEO and Marketing</option><option value="Sales Automation">Sales Automation</option><option value="Sales CRM">Sales CRM</option><option value="Sales and Customer Management">Sales and Customer Management</option><option value="Social Media Management">Social Media Management</option><option value="Social Media Marketing">Social Media Marketing</option><option value="Social Media Search">Social Media Search</option><option value="Team Collaboration">Team Collaboration</option><option value="Team Communication">Team Communication</option><option value="Time Tracking and Project Management">Time Tracking and Project Management</option><option value="Web Development Platform">Web Development Platform</option><option value="Web Scraping and Automation">Web Scraping and Automation</option><option value="Website Development">Website Development</option><option value="Work Automation Platform">Work Automation Platform</option><option value="Work Management Platform">Work Management Platform</option></select>
+      <select id="filterAccess"><option value="">All access types</option><option value="gated-approval">gated-approval</option><option value="gated-partnership">gated-partnership</option><option value="self-serve-free">self-serve-free</option><option value="self-serve-paid">self-serve-paid</option><option value="unclear">unclear</option></select>
+      <select id="filterVerdict"><option value="">All verdicts</option><option value="unclear">unclear</option><option value="yes-today">yes-today</option><option value="yes-with-friction">yes-with-friction</option></select>
+      <input type="text" id="filterText" placeholder="Search app name..." />
+    </div>
+    <div class="table-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th>App</th><th>Category</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Composio</th><th>Verdict</th><th>Blocker</th><th>Evidence</th><th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+  <tr data-category="AI CRM" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Salesforce</td>
+    <td>AI CRM</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://salesforce.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Platform" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>HubSpot</td>
+    <td>Customer Platform</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://hubspot.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Sales CRM" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Pipedrive</td>
+    <td>Sales CRM</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://pipedrive.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI CRM" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Attio</td>
+    <td>AI CRM</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://attio.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Open Source CRM" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Twenty</td>
+    <td>Open Source CRM</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>SDK-only / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://twenty.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Work Management Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Podio</td>
+    <td>Work Management Platform</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://podio.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Sales and Customer Management" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Zoho CRM</td>
+    <td>Sales and Customer Management</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no official MCP server</td>
+    <td><a href="https://zoho.com/crm" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Sales Automation" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Close</td>
+    <td>Sales Automation</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 6 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://close.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="CRM and Sales Automation" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Copper</td>
+    <td>CRM and Sales Automation</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://copper.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="CRM and Sales" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>DealCloud</td>
+    <td>CRM and Sales</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://api.docs.dealcloud.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Service" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Zendesk</td>
+    <td>Customer Service</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://zendesk.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Support" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Intercom</td>
+    <td>Customer Support</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://intercom.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Service" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Freshdesk</td>
+    <td>Customer Service</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://freshdesk.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Service Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Front</td>
+    <td>Customer Service Platform</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://front.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI-native Support Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>Pylon</td>
+    <td>AI-native Support Platform</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of public API documentation</td>
+    <td><a href="https://usepylon.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Customer Support" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>LiveAgent</td>
+    <td>Customer Support</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no official MCP server</td>
+    <td><a href="https://liveagent.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI Support Infrastructure" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Plain</td>
+    <td>AI Support Infrastructure</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://plain.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Service" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Help Scout</td>
+    <td>Customer Service</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://helpscout.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Support" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Gorgias</td>
+    <td>Ecommerce Support</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://gorgias.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Experience AI" data-access="gated-approval" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Gladly</td>
+    <td>Customer Experience AI</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-gated-approval">gated-approval</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://gladly.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Team Collaboration" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Slack</td>
+    <td>Team Collaboration</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://slack.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Cloud Communication" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Twilio</td>
+    <td>Cloud Communication</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no existing Composio toolkit or MCP server</td>
+    <td><a href="https://twilio.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Team Collaboration" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Zoho Cliq</td>
+    <td>Team Collaboration</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://zoho.com/cliq" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Team Collaboration" data-access="unclear" data-verdict="yes-with-friction" data-confidence="low">
+    <td>Lark (Larksuite)</td>
+    <td>Team Collaboration</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-unclear">unclear</span></td>
+    <td>REST / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Team Communication" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Pumble</td>
+    <td>Team Communication</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://pumble.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Communications" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Discord</td>
+    <td>Communications</td>
+    <td>OAuth2, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://discord.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Communications" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Telegram</td>
+    <td>Communications</td>
+    <td>API key, token, other</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 18 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://core.telegram.org" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Business Messaging" data-access="gated-partnership" data-verdict="yes-with-friction" data-confidence="high">
+    <td>WhatsApp Business</td>
+    <td>Business Messaging</td>
+    <td>OAuth2, token</td>
+    <td><span class="pill pill-gated-partnership">gated-partnership</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developers.facebook.com/docs/whatsapp" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Customer Communications" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Aircall</td>
+    <td>Customer Communications</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://aircall.io" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Cloud Communications" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Vonage</td>
+    <td>Cloud Communications</td>
+    <td>API key, token, other</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developer.vonage.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Advertising Management" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Google Ads</td>
+    <td>Advertising Management</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developers.google.com/google-ads" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Advertising Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Meta Ads</td>
+    <td>Advertising Platform</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developers.facebook.com/docs/marketing-apis" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Marketing Automation" data-access="gated-approval" data-verdict="yes-today" data-confidence="high">
+    <td>LinkedIn Ads</td>
+    <td>Marketing Automation</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-gated-approval">gated-approval</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://learn.microsoft.com/linkedin/marketing" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Marketing Automation" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>GoHighLevel</td>
+    <td>Marketing Automation</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Marketing Automation" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Mailchimp</td>
+    <td>Marketing Automation</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://mailchimp.com/developer" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Marketing Automation" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Klaviyo</td>
+    <td>Marketing Automation</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developers.klaviyo.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Marketing Automation" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>systeme.io</td>
+    <td>Marketing Automation</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no official MCP server</td>
+    <td><a href="https://systeme.io" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Social Media Marketing" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Pinterest</td>
+    <td>Social Media Marketing</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developers.pinterest.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Social Media Management" data-access="gated-approval" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Threads (Meta)</td>
+    <td>Social Media Management</td>
+    <td>OAuth2, token</td>
+    <td><span class="pill pill-gated-approval">gated-approval</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>approval process</td>
+    <td><a href="https://developers.facebook.com/docs/threads" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Email Marketing" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>SendGrid</td>
+    <td>Email Marketing</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://sendgrid.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Shopify</td>
+    <td>Ecommerce Platform</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://shopify.dev" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>WooCommerce</td>
+    <td>Ecommerce Platform</td>
+    <td>API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://woocommerce.com/document/woocommerce-rest-api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>BigCommerce</td>
+    <td>Ecommerce Platform</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developer.bigcommerce.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>Salesforce Commerce Cloud</td>
+    <td>Ecommerce</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developer.salesforce.com/docs/commerce" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Magento (Adobe Commerce)</td>
+    <td>Ecommerce platform</td>
+    <td>OAuth2, API key, other</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developer.adobe.com/commerce" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Website Development" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Squarespace</td>
+    <td>Website Development</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developers.squarespace.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Platform" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Ecwid</td>
+    <td>Ecommerce Platform</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no existing MCP server</td>
+    <td><a href="https://api-docs.ecwid.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce" data-access="self-serve-free" data-verdict="yes-today" data-confidence="low">
+    <td>Gumroad</td>
+    <td>Ecommerce</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>✅ 7 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Ecommerce Platform" data-access="gated-approval" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Amazon Selling Partner</td>
+    <td>Ecommerce Platform</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-gated-approval">gated-approval</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://developer-docs.amazon.com/sp-api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Digital Business Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>fanbasis</td>
+    <td>Digital Business Platform</td>
+    <td>none found</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of publicly available API information</td>
+    <td><a href="https://fanbasis.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="SEO Data" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="low">
+    <td>DataForSEO</td>
+    <td>SEO Data</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="SEO Tool" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>SE Ranking</td>
+    <td>SEO Tool</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="SEO and Marketing" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Ahrefs</td>
+    <td>SEO and Marketing</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>✅ official</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://ahrefs.com/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Data Scraping" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>MrScraper</td>
+    <td>Data Scraping</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.mrscraper.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Web Scraping and Automation" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Apify</td>
+    <td>Web Scraping and Automation</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>✅ official</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.apify.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Web Scraping and Automation" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Firecrawl</td>
+    <td>Web Scraping and Automation</td>
+    <td>API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://firecrawl.dev" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Data Scraping" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Bright Data</td>
+    <td>Data Scraping</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>✅ community</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://brightdata.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Social Media Search" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Sherlock</td>
+    <td>Social Media Search</td>
+    <td>none found</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://github.com/sherlock-project/sherlock" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="B2B Data Enrichment" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Waterfall.io</td>
+    <td>B2B Data Enrichment</td>
+    <td>API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://waterfall.io" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Go-to-Market Automation" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>Clay</td>
+    <td>Go-to-Market Automation</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of publicly available API documentation</td>
+    <td><a href="https://clay.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Developer Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>GitHub</td>
+    <td>Developer Platform</td>
+    <td>OAuth2, token, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.github.com/rest" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Cloud Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Vercel</td>
+    <td>Cloud Platform</td>
+    <td>token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://vercel.com/docs/rest-api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Web Development Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Netlify</td>
+    <td>Web Development Platform</td>
+    <td>OAuth2, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.netlify.com/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Network Security" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Cloudflare</td>
+    <td>Network Security</td>
+    <td>API key, token, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developers.cloudflare.com/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Database as a Service" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Supabase</td>
+    <td>Database as a Service</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://supabase.com/docs" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Graph Database" data-access="self-serve-free" data-verdict="yes-today" data-confidence="low">
+    <td>Neo4j</td>
+    <td>Graph Database</td>
+    <td>API key, Basic, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Cloud Data Platform" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Snowflake</td>
+    <td>Cloud Data Platform</td>
+    <td>OAuth2, API key, Basic</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 17 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.snowflake.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Database Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>MongoDB Atlas</td>
+    <td>Database Platform</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://mongodb.com/docs/atlas/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Monitoring and Security" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Datadog</td>
+    <td>Monitoring and Security</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.datadoghq.com/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Error Tracking" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Sentry</td>
+    <td>Error Tracking</td>
+    <td>token, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.sentry.io/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Productivity" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Notion</td>
+    <td>Productivity</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developers.notion.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Productivity and Project Management" data-access="unclear" data-verdict="yes-today" data-confidence="low">
+    <td>Airtable</td>
+    <td>Productivity and Project Management</td>
+    <td>none found</td>
+    <td><span class="pill pill-unclear">unclear</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://airtable.com/developers" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Project Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Linear</td>
+    <td>Project Management</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>GraphQL / medium</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developers.linear.app" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Project Management" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="medium">
+    <td>Jira</td>
+    <td>Project Management</td>
+    <td>OAuth2, API key, Basic</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developer.atlassian.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Productivity and Project Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Asana</td>
+    <td>Productivity and Project Management</td>
+    <td>token, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developers.asana.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Work Automation Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Monday.com</td>
+    <td>Work Automation Platform</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>GraphQL / large</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developer.monday.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Project Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>ClickUp</td>
+    <td>Project Management</td>
+    <td>OAuth</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>✅ official</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://clickup.com/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Collaboration Platform" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Coda</td>
+    <td>Collaboration Platform</td>
+    <td>API key, token</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://coda.io/developers" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Project Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Smartsheet</td>
+    <td>Project Management</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://smartsheet.com/developers" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Time Tracking and Project Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Harvest</td>
+    <td>Time Tracking and Project Management</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://help.getharvest.com/api-v2" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Payment Processing" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Stripe</td>
+    <td>Payment Processing</td>
+    <td>API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://stripe.com/docs/api" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Financial Data Platform" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Plaid</td>
+    <td>Financial Data Platform</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>✅ unknown</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://plaid.com/docs" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Cryptocurrency Trading" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="low">
+    <td>Binance</td>
+    <td>Cryptocurrency Trading</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Payment Processing" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>Paygent Connect</td>
+    <td>Payment Processing</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Foreign Exchange Audit" data-access="unclear" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>iPayX</td>
+    <td>Foreign Exchange Audit</td>
+    <td>none found</td>
+    <td><span class="pill pill-unclear">unclear</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of public API documentation</td>
+    <td><a href="https://ipayx.ai/docs" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Accounting and Finance" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="low">
+    <td>QuickBooks</td>
+    <td>Accounting and Finance</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Accounting and Bookkeeping" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Xero</td>
+    <td>Accounting and Bookkeeping</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developer.xero.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Financial Management" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Brex</td>
+    <td>Financial Management</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://developer.brex.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Financial Management" data-access="self-serve-paid" data-verdict="yes-today" data-confidence="high">
+    <td>Ramp</td>
+    <td>Financial Management</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>✅ 20 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://docs.ramp.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Financial Data Platform" data-access="gated-approval" data-verdict="yes-with-friction" data-confidence="low">
+    <td>PitchBook</td>
+    <td>Financial Data Platform</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-gated-approval">gated-approval</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="AI Research" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>NotebookLM</td>
+    <td>AI Research</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of direct information about NotebookLM</td>
+    <td><a href="https://cloud.google.com/gemini" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="AI transcription" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>Otter AI</td>
+    <td>AI transcription</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="AI Notetaking" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>Fathom</td>
+    <td>AI Notetaking</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>✅ 7 tools</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://fathom.video" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI Research" data-access="unclear" data-verdict="unclear" data-confidence="low">
+    <td>Consensus</td>
+    <td>AI Research</td>
+    <td>OAuth2</td>
+    <td><span class="pill pill-unclear">unclear</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-unclear">unclear</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Document Parsing" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Reducto</td>
+    <td>Document Parsing</td>
+    <td>API key, other</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / large</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://reducto.ai" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI-powered software development" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Devin</td>
+    <td>AI-powered software development</td>
+    <td>OAuth2, API key, token</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>none</td>
+    <td><a href="https://docs.devin.ai" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="AI Media Generation" data-access="self-serve-free" data-verdict="yes-today" data-confidence="high">
+    <td>higgsfield</td>
+    <td>AI Media Generation</td>
+    <td>other</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>none found / unknown</td>
+    <td>✅ official</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-today">yes-today</span></td>
+    <td>none</td>
+    <td><a href="https://higgsfield.ai/cli" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+
+  <tr data-category="Diagram Generation" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="medium">
+    <td>Mermaid CLI</td>
+    <td>Diagram Generation</td>
+    <td>none found</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>none found / unknown</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>lack of API documentation</td>
+    <td><a href="https://github.com/mermaid-js/mermaid-cli" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-medium">medium</span></td>
+  </tr>
+
+  <tr data-category="Media Processing" data-access="self-serve-paid" data-verdict="yes-with-friction" data-confidence="low">
+    <td>YouTube Transcript</td>
+    <td>Media Processing</td>
+    <td>API key, OAuth2</td>
+    <td><span class="pill pill-self-serve-paid">self-serve-paid</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no page could be fetched</td>
+    <td>—</td>
+    <td><span class="conf conf-low">low</span></td>
+  </tr>
+
+  <tr data-category="Meeting Intelligence" data-access="self-serve-free" data-verdict="yes-with-friction" data-confidence="high">
+    <td>Grain</td>
+    <td>Meeting Intelligence</td>
+    <td>OAuth2, API key</td>
+    <td><span class="pill pill-self-serve-free">self-serve-free</span></td>
+    <td>REST / medium</td>
+    <td>—</td>
+    <td>—</td>
+    <td><span class="pill pill-yes-with-friction">yes-with-friction</span></td>
+    <td>no official MCP server</td>
+    <td><a href="https://grain.com" target="_blank" rel="noopener">source</a></td>
+    <td><span class="conf conf-high">high</span></td>
+  </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+
+<script>
+  const catSel = document.getElementById('filterCategory');
+  const accSel = document.getElementById('filterAccess');
+  const verSel = document.getElementById('filterVerdict');
+  const textInput = document.getElementById('filterText');
+  const rows = Array.from(document.querySelectorAll('#mainTable tbody tr'));
+
+  function applyFilters() {
+    const cat = catSel.value, acc = accSel.value, ver = verSel.value, text = textInput.value.toLowerCase();
+    rows.forEach(row => {
+      const matchesCat = !cat || row.dataset.category === cat;
+      const matchesAcc = !acc || row.dataset.access === acc;
+      const matchesVer = !ver || row.dataset.verdict === ver;
+      const matchesText = !text || row.children[0].textContent.toLowerCase().includes(text);
+      row.style.display = (matchesCat && matchesAcc && matchesVer && matchesText) ? '' : 'none';
+    });
+  }
+  [catSel, accSel, verSel].forEach(el => el.addEventListener('change', applyFilters));
+  textInput.addEventListener('input', applyFilters);
+
+  // basic column sort
+  document.querySelectorAll('#mainTable th').forEach((th, colIndex) => {
+    th.addEventListener('click', () => {
+      const tbody = document.querySelector('#mainTable tbody');
+      const sorted = rows.slice().sort((a, b) =>
+        a.children[colIndex].textContent.localeCompare(b.children[colIndex].textContent)
+      );
+      sorted.forEach(r => tbody.appendChild(r));
+    });
+  });
+</script>
+
+</body>
+</html>

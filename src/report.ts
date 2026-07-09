@@ -373,5 +373,5 @@ const html = `<!DOCTYPE html>
 </body>
 </html>`;
 
-fs.writeFileSync(path.join(DIR, "report.html"), html);
-console.log("Wrote report.html");
+fs.writeFileSync(path.join(DIR, "index.html"), html);
+console.log("Wrote index.html");
