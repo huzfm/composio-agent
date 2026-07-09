@@ -14,7 +14,7 @@
     "connect-github": "tsx src/index.ts connect-github",
     "github": "tsx src/index.ts github",
     "report": "tsx src/report.ts",
-    "all": "pnpm research && pnpm patterns && pnpm sample && pnpm github && pnpm report",
+    "all": "npm run research && npm run patterns && npm run sample && npm run github && npm run report",
     "output": "npm run patterns && npm run github && npm run report"
   },
   "dependencies": {

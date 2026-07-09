@@ -262,6 +262,7 @@ async function checkComposioToolkit(app: AppInput): Promise<ComposioCheckResult 
 // Returns null if nothing URL-shaped is found (e.g. "paygent (NMI-powered)").
 function parseUrlFromHint(hint: string): string | null {
   const firstToken = hint.trim().split(/\s+/)[0];
+  if (!firstToken) return null;
   const looksLikeUrl = /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(firstToken);
   if (!looksLikeUrl) return null;
   return firstToken.startsWith("http") ? firstToken : `https://${firstToken}`;
