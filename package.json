@@ -1,0 +1,30 @@
+{
+  "name": "research-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agent that researches 100 apps for AI-agent toolkit buildability, verifies its own accuracy, and outputs a single HTML case study.",
+  "type": "commonjs",
+  "scripts": {
+    "research": "tsx src/index.ts research",
+    "research:test": "tsx src/index.ts research --test",
+    "research:rerun": "tsx src/index.ts research --rerun",
+    "research:resume": "tsx src/index.ts research --resume",
+    "sample": "tsx src/index.ts sample",
+    "patterns": "tsx src/index.ts patterns",
+    "connect-github": "tsx src/index.ts connect-github",
+    "github": "tsx src/index.ts github",
+    "report": "tsx src/report.ts",
+    "all": "pnpm research && pnpm patterns && pnpm sample && pnpm github && pnpm report",
+    "output": "npm run patterns && npm run github && npm run report"
+  },
+  "dependencies": {
+    "@composio/core": "^0.13.1",
+    "dotenv": "^16.4.5",
+    "groq-sdk": "^0.7.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}
