@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "src",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/report.html"
+    }
+  ]
+}
